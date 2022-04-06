@@ -1,4 +1,3 @@
-from numpy import gradient
 import pygame
 from pygame.locals import *
 from time import perf_counter
@@ -19,6 +18,9 @@ class Circle():
         self.shape.collision_type = 4
         space.add(self.body, self.shape)
 
+        self.car = None
+        self.enter = False
+
         def vel_condition(body, gravity, damping, dt):
             #pymunk.Body.update_velocity(body, gravity, damping, dt)
             pymunk.Body.update_velocity(body, gravity, 0.9, dt)
@@ -29,7 +31,7 @@ class Circle():
     def velocity(self):
         return self.body.velocity.length
 
-    def update(self):
+    def move_player(self):
         keys = pygame.key.get_pressed()
         direction = Vec2d(0,0)
         press = {
@@ -51,11 +53,26 @@ class Circle():
         impulse = direction.normalized()*1000/self.body.mass
         self.body.apply_impulse_at_local_point(impulse)
 
+        #self.enter = keys[K_f]
         #self.body.velocity = 100*direction
 
         #force = direction.normalized()*10000
         #self.body.apply_force_at_local_point( force, (0,0))
 
+    def key_release(self):
+        self.enter = False
+        for event in pygame.event.get(KEYUP):
+            if event.key == K_f:
+                print('F pressed')
+                self.enter = True
+
+    def update(self):
+        if self.car:
+            self.car.update()
+            self.car.key_release()
+        else:
+            self.key_release()
+            self.move_player()
 
     def __del__(self):
         #print('Deleting Rectangle')
@@ -127,6 +144,7 @@ class Car(Rectangle):
         self.shape.collision_type = 3
         self.wheel = Wheel(space, (pos[0], pos[1] + 40) , mass = 10, static=static)
         self.wheel2 = Wheel(space, (pos[0], pos[1] - 40) , mass = 10, static=static)
+        self.player = None
 
         joint = pymunk.PivotJoint(self.wheel.body, self.body, (0,0), (0,40))
         joint.collide_bodies = False
@@ -136,7 +154,16 @@ class Car(Rectangle):
         spring2 = pymunk.DampedRotarySpring(self.wheel2.body, self.body, 0, 200000, 50000)
         space.add(joint, joint2, spring, spring2)
 
+    def key_release(self):
+        for event in pygame.event.get(KEYUP):
+            if event.key == K_f:
+                print('F pressed in the car!!!')
+                self.player.car = None
+
     def update(self):
+        # keys = pygame.key.get_pressed()
+        # if keys[K_f]:
+        #     self.player.car = None
         self.wheel.update_acc()
         self.wheel2.update_dirr()
 
@@ -193,6 +220,19 @@ class Game():
             for a in arbiter.shapes:
                 a.color = pygame.Color('blue')
             return True
+
+        def begin_col_4(arbiter, space, data):
+            player, car = [self.shapes[a] for a in arbiter.shapes]
+            player.shape.color = pygame.Color('white')
+            car.shape.color = pygame.Color('yellow')
+            if player.enter:
+                print(f'Enter : {player.enter}')
+                player.enter = False
+                player.car = car
+                player.body.position = Vec2d(600,250)
+                car.player = player
+            
+            return True
         
         coll = self.space.add_collision_handler(3, 3)
         coll.begin = begin_col
@@ -202,6 +242,10 @@ class Game():
 
         coll3 = self.space.add_collision_handler(1, 1)
         coll3.begin = begin_col_3
+
+        coll4 = self.space.add_collision_handler(4, 3)
+        #coll4.begin = begin_col_4
+        coll4.pre_solve = begin_col_4
 
         coll_wheel = self.space.add_wildcard_collision_handler(2)
         coll_wheel.begin = lambda arbiter, space, data : False
@@ -230,7 +274,7 @@ class Game():
             self.rects.append( r )
             self.shapes[r.shape] = r
         
-        self.player = Circle(self.space, (800,500))
+        self.player = Circle(self.space, (200,200))
         self.shapes[self.player.shape] = self.player
 
     def show_fps(self, surface):
