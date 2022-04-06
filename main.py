@@ -1,3 +1,4 @@
+from numpy import gradient
 import pygame
 from pygame.locals import *
 from time import perf_counter
@@ -5,6 +6,60 @@ import pymunk
 import pymunk.pygame_util
 from pymunk import Vec2d
 from math import cos, sin, pi
+
+class Circle():
+    def __init__(self, space, pos, r = 10, mass = 10) -> None:
+        self.body = pymunk.Body(mass, float('inf'))
+        self.body.position = pos
+        self.shape = pymunk.Circle(self.body, r)
+        self._space = space
+        
+        self.shape.elasticity = 0
+        self.shape.friction = 0
+        self.shape.collision_type = 4
+        space.add(self.body, self.shape)
+
+        def vel_condition(body, gravity, damping, dt):
+            #pymunk.Body.update_velocity(body, gravity, damping, dt)
+            pymunk.Body.update_velocity(body, gravity, 0.9, dt)
+
+        self.body.velocity_func = vel_condition
+
+    @property
+    def velocity(self):
+        return self.body.velocity.length
+
+    def update(self):
+        keys = pygame.key.get_pressed()
+        direction = Vec2d(0,0)
+        press = {
+            'up'   : keys[K_UP]    or keys[K_w],
+            'down' : keys[K_DOWN]  or keys[K_s],
+            'left' : keys[K_LEFT]  or keys[K_a],
+            'right': keys[K_RIGHT] or keys[K_d]
+            }
+        
+        if press['up']:
+            direction += Vec2d(0,-1)
+        if press['down']:
+            direction += Vec2d(0,1)
+        if press['left']:
+            direction += Vec2d(-1,0)
+        if press['right']:
+            direction += Vec2d(1,0)
+        
+        impulse = direction.normalized()*1000/self.body.mass
+        self.body.apply_impulse_at_local_point(impulse)
+
+        #self.body.velocity = 100*direction
+
+        #force = direction.normalized()*10000
+        #self.body.apply_force_at_local_point( force, (0,0))
+
+
+    def __del__(self):
+        #print('Deleting Rectangle')
+        self._space.remove(self.shape, self.body)
 
 class Rectangle():
     def __init__(self, space, pos, size = (50,100), mass = 10) -> None:
@@ -26,7 +81,7 @@ class Rectangle():
         space.add(self.body, self.shape)
 
     def __del__(self):
-        print('Deleting Rectangle')
+        #print('Deleting Rectangle')
         self._space.remove(self.shape, self.body)
     
 class Wheel(Rectangle):
@@ -139,36 +194,8 @@ class Game():
                 a.color = pygame.Color('blue')
             return True
         
-        def pre_col(arbiter, space, data):
-            print('Pre')
-            print(f'K = {arbiter.total_ke}')
-            return True
-        
-        def post_col(arbiter, space, data):
-            print('Post')
-            # v = []
-            # v1 = arbiter.shapes[0].body.velocity
-            # v2 = arbiter.shapes[1].body.velocity
-            # vr = abs(v2-v1)
-            # for a in arbiter.shapes:
-            #     a.color = pygame.Color('red')
-            #     v.append(abs(a.body.velocity))
-            # if arbiter.is_first_contact:# and arbiter.total_ke >= 20000:
-            #     print(f'K = {arbiter.total_ke}')
-            #     print(f'P = {abs(arbiter.total_impulse)}')
-            #     print(f'V = {max(v)}')
-            #     print(f'Vr = {vr}\n')
-            print(f'K = {arbiter.total_ke}')
-        
-        def separate_col(arbiter, space, data):
-            print('Separate')
-            print(f'K = {arbiter.total_ke}')
-
         coll = self.space.add_collision_handler(3, 3)
         coll.begin = begin_col
-        #coll.pre_solve = pre_col
-        #coll.post_solve = post_col
-        #coll.separate = separate_col
 
         coll2 = self.space.add_collision_handler(3, 1)
         coll2.begin = begin_col_2
@@ -176,12 +203,8 @@ class Game():
         coll3 = self.space.add_collision_handler(1, 1)
         coll3.begin = begin_col_3
 
-        def cross(arbiter, space, data):
-            print('There is nothing here')
-            return False
-
         coll_wheel = self.space.add_wildcard_collision_handler(2)
-        coll_wheel.begin = cross#lambda arbiter, space, data : False
+        coll_wheel.begin = lambda arbiter, space, data : False
 
 
 
@@ -206,11 +229,9 @@ class Game():
             r = Rectangle(self.space, (500,50 + i*22), (20,20), 1)
             self.rects.append( r )
             self.shapes[r.shape] = r
-
-        #seg = pymunk.Segment(self.space.static_body, (0,450), (900,450), 5)
-        #seg.elasticity = 0.7
-        #seg.friction = 1
-        #self.space.add(seg)
+        
+        self.player = Circle(self.space, (800,500))
+        self.shapes[self.player.shape] = self.player
 
     def show_fps(self, surface):
         if dt := perf_counter() - self.t0:
@@ -221,17 +242,16 @@ class Game():
         text_surf = self.font.render(f'fps = {current_fps}', True, (255,255,255))
         surface.blit(text_surf, (5, 5))
     
-    def show_velocity(self, surface):
-        v = round(self.car.velocity)
+    def show_velocity(self, surface, velocity):
+        v = round(velocity)
         text_surf = self.font.render(f'v = {v}', True, (255,255,255))
         surface.blit(text_surf, (5, 200))
 
     def update(self):
         self.screen.fill((0,0,50))
-        self.show_velocity(self.screen)
-        #self.wheel.update_acc()
-        #self.wheel.update_dirr()
-        self.car.update()
+        self.show_velocity(self.screen, self.player.velocity)
+        #self.car.update()
+        self.player.update()
         self.space.step(1/self.fps)
         self.space.debug_draw(self.draw_options)
     
