@@ -12,6 +12,7 @@ class Circle():
         self.body.position = pos
         self.shape = pymunk.Circle(self.body, r)
         self._space = space
+        self.radius = r
         
         self.shape.elasticity = 0
         self.shape.friction = 0
@@ -29,7 +30,10 @@ class Circle():
 
     @property
     def velocity(self):
-        return self.body.velocity.length
+        if self.car:
+            return self.car.velocity
+        else:
+            return self.body.velocity.length
 
     def move_player(self):
         keys = pygame.key.get_pressed()
@@ -59,6 +63,14 @@ class Circle():
         #force = direction.normalized()*10000
         #self.body.apply_force_at_local_point( force, (0,0))
 
+    def remove_from_space(self):
+        self._space.remove(self.shape, self.body)
+
+    def add_to_space(self, pos, vel):
+        self.body.velocity = vel
+        self.body.position = pos
+        self._space.add(self.shape, self.body)
+
     def key_release(self):
         self.enter = False
         for event in pygame.event.get(KEYUP):
@@ -75,8 +87,8 @@ class Circle():
             self.move_player()
 
     def __del__(self):
-        #print('Deleting Rectangle')
-        self._space.remove(self.shape, self.body)
+        if not self.car:
+            self.remove_from_space()
 
 class Rectangle():
     def __init__(self, space, pos, size = (50,100), mass = 10) -> None:
@@ -102,14 +114,18 @@ class Rectangle():
         self._space.remove(self.shape, self.body)
     
 class Wheel(Rectangle):
-    def __init__(self, space, pos, size=(50, 20), mass=10, static=False) -> None:
+    def __init__(self, space, pos, size=(50, 20), mass=1, static=False, force=10000) -> None:
         super().__init__(space, pos, size, mass)
         self.shape.collision_type = 2
+        self.force = force
 
         def new_velocity(body, gravity, damping, dt):
             pymunk.Body.update_velocity(body, gravity, damping, dt)
-            n = Vec2d( cos(body.angle + pi*0.5), sin(body.angle + pi*0.5) )
-            body.velocity = n*body.velocity.dot(n)
+            nx = Vec2d( cos(body.angle), sin(body.angle) )
+            ny = Vec2d( -sin(body.angle), cos(body.angle) )
+            vx = nx*body.velocity.dot(nx)
+            vy = ny*body.velocity.dot(ny)
+            body.velocity = vy
         
         def new_velocity_static(body, gravity, damping, dt):
             pymunk.Body.update_velocity(body, gravity, damping, dt)
@@ -126,25 +142,26 @@ class Wheel(Rectangle):
     def update_acc(self):
         keys = pygame.key.get_pressed()
         if keys[K_DOWN] or keys[K_s]:
-            self.body.apply_force_at_local_point( (0,1000*self.body.mass), (0,0))
+            self.body.apply_force_at_local_point( (0,self.force), (0,0))
         if keys[K_UP] or keys[K_w]:
-            self.body.apply_force_at_local_point( (0,-1000*self.body.mass), (0,0))
+            self.body.apply_force_at_local_point( (0,-self.force), (0,0))
 
     def update_dirr(self):
         keys = pygame.key.get_pressed()
         if self.body.velocity.length >= 20:
             if keys[K_LEFT] or keys[K_a]:
-                self.body.torque = -10000*self.body.mass
+                self.body.torque = -100000
             if keys[K_RIGHT] or keys[K_d]:
-                self.body.torque = 10000*self.body.mass
+                self.body.torque = 100000
     
 class Car(Rectangle):
-    def __init__(self, space, pos, size=(50, 100), mass=10, static=False) -> None:
+    def __init__(self, space, pos, size=(50, 100), mass=10, static=False, force = 10000) -> None:
         super().__init__(space, pos, size, mass)
         self.shape.collision_type = 3
-        self.wheel = Wheel(space, (pos[0], pos[1] + 40) , mass = 10, static=static)
-        self.wheel2 = Wheel(space, (pos[0], pos[1] - 40) , mass = 10, static=static)
+        self.wheel = Wheel(space, (pos[0], pos[1] + 40) , mass = 10, static=static, force=force)
+        self.wheel2 = Wheel(space, (pos[0], pos[1] - 40) , mass = 10, static=static, force=force)
         self.player = None
+        self.size = size
 
         joint = pymunk.PivotJoint(self.wheel.body, self.body, (0,0), (0,40))
         joint.collide_bodies = False
@@ -159,6 +176,11 @@ class Car(Rectangle):
             if event.key == K_f:
                 print('F pressed in the car!!!')
                 self.player.car = None
+                ang = self.body.angle
+                dx = -(self.size[0]/2 + self.player.radius)*Vec2d(cos(ang), sin(ang) )
+                dy = (self.size[1]/4)*Vec2d(cos(ang - pi/2), sin(ang - pi/2) )
+                pos = self.body.position + dx
+                self.player.add_to_space(pos, self.body.velocity)
 
     def update(self):
         # keys = pygame.key.get_pressed()
@@ -229,8 +251,9 @@ class Game():
                 print(f'Enter : {player.enter}')
                 player.enter = False
                 player.car = car
-                player.body.position = Vec2d(600,250)
                 car.player = player
+                player.remove_from_space()
+                #player.body.position = Vec2d(600,250)
             
             return True
         
@@ -260,8 +283,8 @@ class Game():
     
     def load(self):
         self.wheel = Wheel(self.space, (400,100))
-        self.car = Car(self.space, (100,100))
-        self.car2 = Car(self.space, (200,100), static=True)
+        self.car = Car(self.space, (100,100), mass=10, force=2*10000)
+        self.car2 = Car(self.space, (200,100), static=False)
 
         self.shapes = {
             self.car.shape : self.car,
