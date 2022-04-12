@@ -114,10 +114,11 @@ class Rectangle():
         self._space.remove(self.shape, self.body)
     
 class Wheel(Rectangle):
-    def __init__(self, space, pos, size=(50, 20), mass=1, static=False, force=10000) -> None:
+    def __init__(self, space, pos, size=(50, 20), mass=10, static=False, force=10000, max_vel=100) -> None:
         super().__init__(space, pos, size, mass)
         self.shape.collision_type = 2
         self.force = force
+        self.max_vel = max_vel
 
         def new_velocity(body, gravity, damping, dt):
             pymunk.Body.update_velocity(body, gravity, damping, dt)
@@ -139,56 +140,115 @@ class Wheel(Rectangle):
         else:
             self.body.velocity_func = self.velocity_func_acc
 
-    def update_acc(self):
-        keys = pygame.key.get_pressed()
-        if keys[K_DOWN] or keys[K_s]:
-            self.body.apply_force_at_local_point( (0,self.force), (0,0))
-        if keys[K_UP] or keys[K_w]:
-            self.body.apply_force_at_local_point( (0,-self.force), (0,0))
+    def apply_force(self, force):
+        self.body.apply_force_at_local_point( (0,force), (0,0))
 
-    def update_dirr(self):
-        keys = pygame.key.get_pressed()
-        if self.body.velocity.length >= 20:
-            if keys[K_LEFT] or keys[K_a]:
-                self.body.torque = -100000
-            if keys[K_RIGHT] or keys[K_d]:
-                self.body.torque = 100000
+    def apply_torque(self, torque):
+        self.body.torque = torque
     
+    def turn(self, ang):
+        self.body.angle = ang
+    
+    def apply_angle(self, ang, ref):
+        self.body.angle += ang
+        da = ref - self.body.angle
+        if -0.51 > da:
+            self.body.angle = ref + 0.51
+        elif 0.51 < da:
+            self.body.angle = ref - 0.51
+    
+    def default_angle(self, ref):
+        da = ref - self.body.angle
+        if da > 0:
+            self.apply_angle(0.05, ref)
+        elif da < 0:
+            self.apply_angle(-0.05, ref)
+
+    def stop(self):
+        nw = Vec2d(-sin(self.body.angle), cos(self.body.angle))
+        nv, v = self.body.velocity.normalized_and_length()
+        f = nw.dot(nv)
+        if f < 0 and v > 5:
+            self.apply_force(self.force)
+        elif f > 0 and v > 5:
+            self.apply_force(-self.force)
+
+    def wheel_break(self, status):
+        if status:
+            self.body.velocity_func = self.velocity_func_stc
+        else:
+            self.body.velocity_func = self.velocity_func_acc
+
 class Car(Rectangle):
-    def __init__(self, space, pos, size=(50, 100), mass=10, static=False, force = 10000) -> None:
+    def __init__(self, space, pos, size=(50, 100), mass=10, static=False, force=10000, max_vel=100) -> None:
         super().__init__(space, pos, size, mass)
         self.shape.collision_type = 3
-        self.wheel = Wheel(space, (pos[0], pos[1] + 40) , mass = 10, static=static, force=force)
-        self.wheel2 = Wheel(space, (pos[0], pos[1] - 40) , mass = 10, static=static, force=force)
+        self.wheel = Wheel(space, (pos[0], pos[1] + 40) , mass = 10, static=static, force=force, max_vel=max_vel)
+        self.wheel2 = Wheel(space, (pos[0], pos[1] - 40) , mass = 10, static=static, force=force, max_vel=max_vel)
         self.player = None
         self.size = size
+        self.force = force
+        self.breaks = static
+        self.max_vel = max_vel
 
         joint = pymunk.PivotJoint(self.wheel.body, self.body, (0,0), (0,40))
         joint.collide_bodies = False
         joint2 = pymunk.PivotJoint(self.wheel2.body, self.body, (0,0), (0,-40))
         joint2.collide_bodies = False
-        spring = pymunk.DampedRotarySpring(self.wheel.body, self.body, 0, 200000, 50000)
-        spring2 = pymunk.DampedRotarySpring(self.wheel2.body, self.body, 0, 200000, 50000)
-        space.add(joint, joint2, spring, spring2)
+        space.add(joint, joint2)
+
+        def vel_fun(body, gravity, damping, dt):
+            pymunk.Body.update_velocity(body, gravity, damping, dt)
+            if body.velocity.length > self.max_vel:
+                body.velocity = self.max_vel*body.velocity.normalized()
+            if not self.player:
+                #print('sdsd')
+                self.wheel.turn(self.body.angle)
+                self.wheel2.turn(self.body.angle)
+        
+        self.body.velocity_func = vel_fun
 
     def key_release(self):
         for event in pygame.event.get(KEYUP):
             if event.key == K_f:
                 print('F pressed in the car!!!')
-                self.player.car = None
                 ang = self.body.angle
                 dx = -(self.size[0]/2 + self.player.radius)*Vec2d(cos(ang), sin(ang) )
                 dy = (self.size[1]/4)*Vec2d(cos(ang - pi/2), sin(ang - pi/2) )
                 pos = self.body.position + dx
                 self.player.add_to_space(pos, self.body.velocity)
+                self.player.car = None
+                self.player = None
+            
+            elif event.key == K_x:
+                if self.velocity < 10:
+                    self.breaks = not self.breaks
+                    self.car_breaks(self.breaks)
 
     def update(self):
-        # keys = pygame.key.get_pressed()
-        # if keys[K_f]:
-        #     self.player.car = None
-        self.wheel.update_acc()
-        self.wheel2.update_dirr()
-
+        keys = pygame.key.get_pressed()
+        self.wheel.turn(self.body.angle)
+        
+        if keys[K_DOWN] or keys[K_s]:
+            self.wheel.apply_force(self.force/2)
+        if keys[K_UP] or keys[K_w]:
+            self.wheel.apply_force(-self.force)
+        
+        if keys[K_LEFT] or keys[K_a]:
+            self.wheel2.apply_angle(-0.1, self.body.angle)
+        if keys[K_RIGHT] or keys[K_d]:
+            self.wheel2.apply_angle(0.1, self.body.angle)
+        
+        if not(keys[K_RIGHT] or keys[K_d]) and not(keys[K_LEFT] or keys[K_a]):
+            self.wheel2.default_angle(self.body.angle)
+        
+        if keys[K_SPACE]:
+            self.wheel.stop()
+    
+    def car_breaks(self, status):
+        self.wheel.wheel_break(status)
+        self.wheel2.wheel_break(status)
+    
     @property
     def velocity(self):
         return self.body.velocity.length
@@ -253,6 +313,7 @@ class Game():
                 player.car = car
                 car.player = player
                 player.remove_from_space()
+                #car.car_breaks(False)
                 #player.body.position = Vec2d(600,250)
             
             return True
@@ -283,7 +344,7 @@ class Game():
     
     def load(self):
         self.wheel = Wheel(self.space, (400,100))
-        self.car = Car(self.space, (100,100), mass=10, force=2*10000)
+        self.car = Car(self.space, (100,100), mass=10, force=2*10000, max_vel=200)
         self.car2 = Car(self.space, (200,100), static=False)
 
         self.shapes = {
