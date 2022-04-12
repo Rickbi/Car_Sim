@@ -1,2 +1,2 @@
 # Parking_Sim
-Entri for a Game Jam
+Remaking an old proyect.
