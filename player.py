@@ -25,62 +25,29 @@ class Player(pymunk.Circle):
                 body.velocity = body.velocity.normalized()*self.max_velocity
 
         self.body.velocity_func = vel_condition
+        self.filter = pymunk.ShapeFilter(categories=0b1000)
 
     @property
-    def velocity(self):
+    def speed(self):
         if self.car:
-            return self.car.velocity
+            return self.car.speed
         else:
             return self.body.velocity.length
 
-    def key_release(self):
-        self.enter = False
-        for event in pygame.event.get(KEYUP):
-            if event.key == K_f:
-                self.enter = True
-            if event.key == K_F1:
-                self.max_velocity = self.max_velocity*2
-                self.acc = self.acc*2
-    
-    def event_handler(self):
-        self.key_release()
-        self.direction = Vec2d(0,0)
-        keys = pygame.key.get_pressed()
-        press = {
-            'up'   : keys[K_UP]    or keys[K_w],
-            'down' : keys[K_DOWN]  or keys[K_s],
-            'left' : keys[K_LEFT]  or keys[K_a],
-            'right': keys[K_RIGHT] or keys[K_d]
-            }
-        
-        if press['up']:
-            self.direction += Vec2d(0,-1)
-        if press['down']:
-            self.direction += Vec2d(0,1)
-        if press['left']:
-            self.direction += Vec2d(-1,0)
-        if press['right']:
-            self.direction += Vec2d(1,0)
+    @property
+    def position(self):
+        return self.body.position
 
-    def update(self):
-        if self.car:
-            pass
-            #self.car.update()
-            #self.car.key_release()
-        else:
-            self.event_handler()
-            #impulse = self.direction.normalized()*self.body.mass
-            #self.body.apply_impulse_at_local_point(impulse)
-            #self.body.velocity = self.direction.normalized()*self.max_velocity
-            force = self.direction.normalized()*self.body.mass*self.acc
-            self.body.apply_force_at_local_point(force)
+    def get_car(self):
+        return self.car
+    
+    def accelerate(self, direction:Vec2d):
+        force = direction.normalized()*self.body.mass*self.acc
+        self.body.apply_force_at_local_point(force)
 
     def add_car(self, car):
         self.car = car
     
-    def remove_car(self):
-        self.car = None
-
     def remove_from_space(self):
         self.space.remove(self.body, self)
 

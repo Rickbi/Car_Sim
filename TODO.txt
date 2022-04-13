@@ -1,0 +1,4 @@
+Add Life meter to objects.
+Add Collisions handler.
+Add Graphics.
+Add city.
