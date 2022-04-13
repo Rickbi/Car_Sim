@@ -22,6 +22,14 @@ class Block(pymunk.Poly):
         self.body.velocity_func = vel_condition
         self.filter = pymunk.ShapeFilter(categories=0b1)
 
+    @property
+    def position(self):
+        return self.body.position
+
+    @property
+    def angle(self):
+        return self.body.angle
+
     def __del__(self):
         if self.space:
             self.space.remove(self.body, self)

@@ -8,6 +8,7 @@ from player import Player
 from block import Block
 from car import Car
 from ui import EventHandler
+from graphics import Graphics
 
 class Game():
     def __init__(self, width, height, fps) -> None:
@@ -31,9 +32,10 @@ class Game():
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
         #self.space.sleep_time_threshold = 0.5
         #self.space.idle_speed_threshold = 1
+        self.event_handler = EventHandler(self.space)
+        self.graphics = Graphics(self.space, (30,30))
     
     def load(self):
-        self.event_handler = EventHandler(self.space)
         self.player = Player(self.space, (100,100), 10, 1)
         self.cars = [
             Car(self.space, (100,200), (50,100), 1),
@@ -62,7 +64,8 @@ class Game():
         self.show_fps(self.screen, (10,10))
         self.show_velocity(self.screen, self.player.speed, (10,50))
         self.event_handler.event_handler(self.player)
-        self.space.debug_draw(self.draw_options)
+        #self.space.debug_draw(self.draw_options)
+        self.graphics.draw_all()
     
     def run_game(self):
         run = True
