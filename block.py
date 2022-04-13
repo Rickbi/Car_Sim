@@ -4,7 +4,7 @@ class Block(pymunk.Poly):
     def __init__(self, space, pos, size, density) -> None:
         box = pymunk.Poly.create_box(None, size)
         vertices = box.get_vertices()
-        super().__init__(body=None, vertices=vertices, radius=1)
+        super().__init__(body=None, vertices=vertices, radius=0)
         
         self.body = pymunk.Body()
         self.body.position = pos
@@ -20,7 +20,9 @@ class Block(pymunk.Poly):
             pymunk.Body.update_velocity(body, gravity, 0.95, dt)
 
         self.body.velocity_func = vel_condition
+        self.filter = pymunk.ShapeFilter(categories=0b1)
 
     def __del__(self):
         if self.space:
             self.space.remove(self.body, self)
+    

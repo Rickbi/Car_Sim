@@ -9,6 +9,7 @@ from math import cos, sin
 from player import Player
 from block import Block
 from car import Wheel, Car
+from ui import EventHandler
 
 class Box(pymunk.Poly):
     def __init__(self, size, space, pos) -> None:
@@ -143,6 +144,8 @@ def main_2():
     space.gravity = Vec2d(0, 0)
     draw_options = pymunk.pygame_util.DrawOptions(screen)
     
+    ui = EventHandler(space)
+
     player = Player(space, (100,100), 10, 1)
     wheel = Wheel(space, (500, 100), (50, 20), 1)
     car = Car(space, (400,500), (50,100), 1)
@@ -159,9 +162,18 @@ def main_2():
         if pygame.event.get(QUIT):
             run = False
         
-        #screen.fill((100,100,100))
-        #player.update()
-        car.update()
+        screen.fill((100,100,100))
+
+        point = space.point_query_nearest((100,100), 50, pymunk.ShapeFilter(mask=0b100))
+        if point:
+            pygame.draw.circle(screen, (255,0,0), (100,100), 50, 5)
+        else:
+            pygame.draw.circle(screen, (0,0,255), (100,100), 50, 5)
+
+        #ui.player_event_handler(player)
+        #ui.car_event_handler(car)
+        ui.event_handler(player)
+        #car.update()
         #print(player.velocity)
         
         space.debug_draw(draw_options)
