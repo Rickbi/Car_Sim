@@ -1,4 +1,5 @@
-Add Life meter to objects.
-Add Collisions handler.
 Add Better Graphics.
 Add city.
+Change acceleration.
+Change acc, vel and other values.
+Better size changer.
