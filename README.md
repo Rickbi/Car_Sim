@@ -6,7 +6,7 @@ At this point, the driving feels realistic, but it needs a bit of drift as it fe
 You can also get in and out of any car.
 
 ## How to run
-To run, install all the dependencies from 'requirements.txt'. You can use the following steps.
+To run, install all the dependencies from `requirements.txt`. You can use the following steps.
 
-'''pip install -r requirements.txt
-py scr'''
+```pip install -r requirements.txt
+py scr```
