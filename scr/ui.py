@@ -8,6 +8,7 @@ from car import Car
 class EventHandler():
     def __init__(self, space:Space) -> None:
         self.space = space
+        self.limit_speed_brake = 100
 
     def player_event_handler_release_key(self, player:Player):
         for event in pygame.event.get(KEYUP):
@@ -19,6 +20,7 @@ class EventHandler():
                 if point:
                     player.add_car(point.shape)
                     point.shape.add_player(player)
+                    point.shape.quit_brake()
                     player.remove_from_space()
 
     def player_event_handler_hold_key(self, player:Player):
@@ -47,6 +49,9 @@ class EventHandler():
                 pos = car.get_door_pos()
                 vel = car.velocity
                 player.add_to_space(self.space, pos, vel)
+                if car.speed < self.limit_speed_brake:
+                    car.add_brake()
+                #player.turn(car.angle)
                 car.add_player(None)
                 player.add_car(None)
 

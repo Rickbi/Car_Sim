@@ -3,6 +3,7 @@ from pygame.locals import *
 from time import perf_counter
 import pymunk
 import pymunk.pygame_util
+from math import degrees
 
 from player import Player
 from block import Block
@@ -33,13 +34,14 @@ class Game():
         #self.space.sleep_time_threshold = 0.5
         #self.space.idle_speed_threshold = 1
         self.event_handler = EventHandler(self.space)
-        self.graphics = Graphics(self.space, (30,30))
     
     def load(self):
+        self.graphics = Graphics(self.space)
+
         self.player = Player(self.space, (100,100), 10, 1)
         self.cars = [
-            Car(self.space, (100,200), (45,100), 0.1),
-            Car(self.space, (200,200), (25,75), 0.01),
+            Car(self.space, (100,200), (45,100), 1, acc=200, max_vel=300),
+            Car(self.space, (200,200), (45,100), 1, acc=300, max_vel=300),
 
             Car(self.space, (400,200), (45,100), 1),
             Car(self.space, (500,200), (45,100), 1),
@@ -96,13 +98,32 @@ class Game():
         self.event_handler.event_handler(self.player)
         #self.space.debug_draw(self.draw_options)
         self.graphics.draw_all()
-    
+
+
+        # ## Follow the player
+        # s = pygame.display.get_surface()
+        # s_c = s.copy()
+        # pos = pymunk.Vec2d(500,450) - self.player.position
+        # s.fill((0,0,0))
+        # s.blit(s_c, pos)
+
+        # ## Rotate whith player
+        # s_c = s.copy()
+        # car = self.player.get_car()
+        # if car:
+        #     self.player.turn(car.angle)
+        # ang = degrees(self.player.angle)
+        # s_r = pygame.transform.rotate(s_c, ang)
+        # rect = s_r.get_rect(center = (500,450))
+        # s.fill((0,0,0))
+        # s.blit(s_r, rect)
+
     def run_game(self):
         run = True
         while run:
             self.screen.fill((200,200,200))
-            self.space.step(1/self.fps)
             self.update_screen()
+            self.space.step(1/self.fps)
             pygame.display.flip()
             self.clock.tick(self.fps)
             

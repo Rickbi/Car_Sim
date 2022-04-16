@@ -1,5 +1,4 @@
-Add Better Graphics.
 Add city.
-Change acceleration.
-Change acc, vel and other values.
 Better size changer.
+Add drift.
+Add auto vertices.
