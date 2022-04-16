@@ -1,38 +1,38 @@
 import pygame
 from pymunk import Space, Vec2d
 from math import degrees
+from os.path import join
 
 from player import Player
 from car import Car, Wheel
 from block import Block
 
 class Graphics:
-    def __init__(self, space:Space, block_size) -> None:
+    def __init__(self, space:Space) -> None:
         self.screen = pygame.display.get_surface()
         self.space = space
-        self.block_size = block_size
 
         self.load()
     
     def load(self):
-        self.surf_block = pygame.Surface(self.block_size).convert_alpha()
-        self.surf_block.fill((255,255,0))
+        self.path_img = join('assets','img')
 
-        ver = Car.make_vertices((50,100))
-        vertices = []
-        for v in ver:
-            vertices.append( v + Vec2d(25, 50) )
-        self.surf_car = pygame.Surface((50,100))
-        self.surf_car.set_colorkey((0,0,0))
-        pygame.draw.polygon(self.surf_car, (100,100,100), vertices)
-        #self.surf_car.fill((100,100,100))
+        path_block = join(self.path_img, 'block.png')
+        path_car = join(self.path_img, 'car.png')
+        path_wheel = join(self.path_img, 'wheel.png')
+        path_player = join(self.path_img, 'player.png')
 
-        self.surf_wheel = pygame.Surface((10,20)).convert_alpha()
-        self.surf_wheel.fill((0,0,0))
+        self.surf_block = pygame.image.load(path_block).convert_alpha()
+        self.surf_car = pygame.image.load(path_car).convert_alpha()
+        self.surf_wheel = pygame.image.load(path_wheel).convert_alpha()
+        self.surf_player = pygame.image.load(path_player).convert_alpha()
 
     def draw_player(self, player:Player):
-        color = (255,255,255)
-        pygame.draw.circle(self.screen, color, player.position, player.radius)
+        vel:Vec2d = player.velocity
+        ang = vel.angle_degrees + 90
+        roto_surf = pygame.transform.rotate(self.surf_player, -ang)
+        rect = roto_surf.get_rect(center = player.position)
+        self.screen.blit(roto_surf, rect)
     
     def draw_block(self, block:Block):
         roto_surf = pygame.transform.rotate(self.surf_block, degrees(-block.angle))
@@ -40,7 +40,6 @@ class Graphics:
         self.screen.blit(roto_surf, rect)
     
     def draw_wheel(self, car:Car):
-        #resi_surf = pygame.transform.scale(self.surf_car, car.size)
         pos = car.wheel_positions
         roto_surf_front = pygame.transform.rotate(self.surf_wheel, degrees(-car.wheel_angle))
         front_rect_left = roto_surf_front.get_rect(center=car.position + pos[0])
@@ -56,8 +55,7 @@ class Graphics:
 
     def draw_car(self, car:Car):
         self.draw_wheel(car)
-        resi_surf = pygame.transform.scale(self.surf_car, car.size)
-        roto_surf = pygame.transform.rotate(resi_surf, degrees(-car.angle))
+        roto_surf = pygame.transform.rotate(self.surf_car, degrees(-car.angle))
         rect = roto_surf.get_rect(center=car.position)
         self.screen.blit(roto_surf, rect)
 

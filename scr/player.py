@@ -34,8 +34,25 @@ class Player(pymunk.Circle):
             return self.body.velocity.length
 
     @property
+    def velocity(self):
+        return self.body.velocity
+
+    @property
     def position(self):
-        return self.body.position
+        if self.car:
+            return self.car.position
+        else:
+            return self.body.position
+    
+    @property
+    def angle(self):
+        if self.car:
+            return self.car.angle
+        else:
+            return self.body.angle
+    
+    def turn(self, ang):
+        self.body.angle = ang
 
     def get_car(self):
         return self.car

@@ -18,7 +18,7 @@ class Wheel(Block):
         self.max_angle = 0.51
 
         def vel_condition(body, gravity, damping, dt):
-            pymunk.Body.update_velocity(body, gravity, 0.99, dt)
+            pymunk.Body.update_velocity(body, gravity, 1, dt)
             #nx = Vec2d( cos(body.angle), sin(body.angle) )
             ny = Vec2d( -sin(body.angle), cos(body.angle) )
             #vx = nx*body.velocity.dot(nx)
@@ -60,15 +60,17 @@ class Wheel(Block):
 
 
 class Car(Block):
-    def __init__(self, space:pymunk.Space, pos, size, density) -> None:
+    def __init__(self, space:pymunk.Space, pos, size, density, acc=100, max_vel=110) -> None:
         super().__init__(space, pos, size, density)
         
         self.color = pygame.Color(0,0,250)
 
         self.collision_type = 3
         self.player = None
-        self.acc = 1000
-        self.max_vel = 90
+        self.acc = acc
+        self.max_vel = max_vel
+        self.braking = False
+        self.brake_ui = True
 
         self.wheel_pos = self.size[1]/4
         dy_vec = dy = Vec2d(0, self.wheel_pos)
@@ -82,7 +84,12 @@ class Car(Block):
         space.add(joint_front, joint_back)
 
         def vel_fun(body, gravity, damping, dt):
-            pymunk.Body.update_velocity(body, gravity, 0.99, dt)
+            if self.braking or self.brake_ui:
+                dam = 0.8
+                self.braking = False
+            else:
+                dam = 1
+            pymunk.Body.update_velocity(body, gravity, dam, dt)
             if body.velocity.length > self.max_vel:
                 body.velocity = self.max_vel*body.velocity.normalized()
             self.wheel_front.rest_mode(self.body.angle)
@@ -140,7 +147,17 @@ class Car(Block):
         return pos
     
     def brake(self):
-        self.wheel_back.stop()
+        self.braking = True
+        # if self.speed <= self.acc:
+        #     self.body.velocity = Vec2d(0,0)
+        # else:
+        #     nw = Vec2d(-sin(self.body.angle), cos(self.body.angle))
+        #     direction = self.body.velocity.dot(nw)
+        #     force = self.speed**2*self.mass#self.acc*self.mass
+        #     if direction > 0:
+        #         force *= -1
+            
+        #     self.body.apply_force_at_local_point( (0,force), (0,0))
 
     def turn(self, direction:int):
         '''Turn Left if direction < 0\n
@@ -148,13 +165,23 @@ class Car(Block):
         self.wheel_front.add_to_angle(0.1*direction, self.body.angle)
 
     def accelerate(self):
-        self.wheel_back.accelerate(-self.acc)
+        #self.wheel_back.accelerate(-self.acc)
+        force = self.acc*self.mass
+        self.body.apply_force_at_local_point( (0,-force), (0,0))
 
     def back(self):
-        self.wheel_back.accelerate(self.acc/2)
+        #self.wheel_back.accelerate(self.acc/2)
+        force = self.acc*self.mass
+        self.body.apply_force_at_local_point( (0,force), (0,0))
 
     def add_player(self, player):
         self.player = player
     
     def get_player(self) -> Player|None:
         return self.player
+
+    def quit_brake(self):
+        self.brake_ui = False
+
+    def add_brake(self):
+        self.brake_ui = True
