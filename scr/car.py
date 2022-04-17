@@ -3,7 +3,7 @@ from pygame.locals import *
 import pymunk
 from pymunk import Vec2d
 from block import Block
-from math import cos, sin
+from math import cos, sin, radians
 
 from player import Player
 
@@ -17,13 +17,16 @@ class Wheel(Block):
         self.max_vel = 90
         self.max_angle = 0.51
 
-        def vel_condition(body, gravity, damping, dt):
+        def vel_condition(body:pymunk.Body, gravity, damping, dt):
             pymunk.Body.update_velocity(body, gravity, 1, dt)
-            #nx = Vec2d( cos(body.angle), sin(body.angle) )
             ny = Vec2d( -sin(body.angle), cos(body.angle) )
-            #vx = nx*body.velocity.dot(nx)
             vy = ny*body.velocity.dot(ny)
-            body.velocity = vy
+            if body.velocity.length > 290:
+                nx = Vec2d( cos(body.angle), sin(body.angle) )
+                vx = nx*body.velocity.dot(nx)
+                body.velocity = vy + vx*0.8
+            else:
+                body.velocity = vy
                 
         self.body.velocity_func = vel_condition
         self.filter = pymunk.ShapeFilter(categories=0b10, mask=0)
@@ -60,10 +63,10 @@ class Wheel(Block):
 
 
 class Car(Block):
-    def __init__(self, space:pymunk.Space, pos, size, density, acc=100, max_vel=110) -> None:
+    def __init__(self, space:pymunk.Space, pos, size, density, acc=100, max_vel=110, angle=0) -> None:
         super().__init__(space, pos, size, density)
         
-        self.color = pygame.Color(0,0,250)
+        self.color = pygame.Color(255,255,255)
 
         self.collision_type = 3
         self.player = None
@@ -72,14 +75,19 @@ class Car(Block):
         self.braking = False
         self.brake_ui = True
 
-        self.wheel_pos = self.size[1]/4
-        dy_vec = dy = Vec2d(0, self.wheel_pos)
-        self.wheel_front = Wheel(space, self.body.position - dy_vec, (self.size[0], 20), 1)
-        self.wheel_back = Wheel(space, self.body.position + dy_vec, (self.size[0], 20), 1)
+        self.body.angle = radians(angle)
 
-        joint_front = pymunk.PivotJoint(self.wheel_front.body, self.body, (0,0), -dy)
+        self.wheel_pos = self.size[1]/4
+        dy_body = Vec2d(0, self.wheel_pos)
+        dy_world = self.wheel_position
+        self.wheel_front = Wheel(space, self.body.position - dy_world, (self.size[0], 20), 1)
+        self.wheel_back = Wheel(space, self.body.position + dy_world, (self.size[0], 20), 1)
+        self.wheel_front.turn(self.angle)
+        self.wheel_back.turn(self.angle)
+
+        joint_front = pymunk.PivotJoint(self.wheel_front.body, self.body, (0,0), -dy_body)
         joint_front.collide_bodies = False
-        joint_back = pymunk.PivotJoint(self.wheel_back.body, self.body, (0,0), dy)
+        joint_back = pymunk.PivotJoint(self.wheel_back.body, self.body, (0,0), dy_body)
         joint_back.collide_bodies = False
         space.add(joint_front, joint_back)
 
@@ -129,14 +137,14 @@ class Car(Block):
     @staticmethod
     def make_vertices(size):
         w, h = size
-        p1 = Vec2d(-w/4, -h/2)
-        p2 = Vec2d(w/4, -h/2)
-        p3 = Vec2d(w/2, -h/2*4/5)
-        p4 = Vec2d(w/2, h/2*2/3)
-        p5 = Vec2d(w/2*3/4, h/2)
-        p6 = Vec2d(-w/2*3/4, h/2)
-        p7 = Vec2d(-w/2, h/2*2/3)
-        p8 = Vec2d(-w/2, -h/2*4/5)
+        p1 = Vec2d(-w*17/45, -h/2)
+        p2 = Vec2d(w*17/45, -h/2)
+        p3 = Vec2d(w/2, -h*0.23)
+        p4 = Vec2d(w/2, h*0.39)
+        p5 = Vec2d(w/3, h/2)
+        p6 = Vec2d(-w/3, h/2)
+        p7 = Vec2d(-w/2, h*0.39)
+        p8 = Vec2d(-w/2, -h*0.23)
         return p1, p2, p3, p4, p5, p6, p7, p8
 
     def get_door_pos(self):

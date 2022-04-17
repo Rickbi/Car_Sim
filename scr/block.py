@@ -36,4 +36,9 @@ class Block(pymunk.Poly):
     def __del__(self):
         if self.space:
             self.space.remove(self.body, self)
-    
+
+class Building(Block):
+    def __init__(self, space, pos, size) -> None:
+        super().__init__(space, pos, size, 1)
+        self.body.body_type = pymunk.Body.STATIC
+        self.elasticity = 0.2

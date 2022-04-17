@@ -6,7 +6,7 @@ import pymunk.pygame_util
 from math import degrees
 
 from player import Player
-from block import Block
+from block import Block, Building
 from car import Car
 from ui import EventHandler
 from graphics import Graphics
@@ -40,43 +40,46 @@ class Game():
 
         self.player = Player(self.space, (100,100), 10, 1)
         self.cars = [
-            Car(self.space, (100,200), (45,100), 1, acc=200, max_vel=300),
-            Car(self.space, (200,200), (45,100), 1, acc=300, max_vel=300),
+            Car(self.space, (50,200), (45,100), 1, acc=200, max_vel=300, angle=90),
+            Car(self.space, (200,200), (45,100), 1, acc=300, max_vel=300, angle=180),
 
-            Car(self.space, (400,200), (45,100), 1),
-            Car(self.space, (500,200), (45,100), 1),
-            Car(self.space, (600,200), (45,100), 1),
-            Car(self.space, (700,200), (45,100), 1),
-            Car(self.space, (800,200), (45,100), 1),
+            Car(self.space, (400,200), (45,100), 1, angle=45),
+            Car(self.space, (500,200), (45,100), 1, angle=45),
+            Car(self.space, (600,200), (45,100), 1, angle=45),
+            Car(self.space, (700,200), (45,100), 1, angle=45),
+            Car(self.space, (800,200), (45,100), 1, angle=45),
 
-            Car(self.space, (400,350), (45,100), 1),
-            Car(self.space, (500,350), (45,100), 1),
-            Car(self.space, (600,350), (45,100), 1),
-            Car(self.space, (700,350), (45,100), 1),
-            Car(self.space, (800,350), (45,100), 1),
+            Car(self.space, (400,350), (45,100), 1, angle=45),
+            Car(self.space, (500,350), (45,100), 1, angle=45),
+            Car(self.space, (600,350), (45,100), 1, angle=45),
+            Car(self.space, (700,350), (45,100), 1, angle=45),
+            Car(self.space, (800,350), (45,100), 1, angle=45),
 
-            Car(self.space, (400,500), (45,100), 1),
-            Car(self.space, (500,500), (45,100), 1),
-            Car(self.space, (600,500), (45,100), 1),
-            Car(self.space, (700,500), (45,100), 1),
-            Car(self.space, (800,500), (45,100), 1),
+            Car(self.space, (400,500), (45,100), 1, angle=45),
+            Car(self.space, (500,500), (45,100), 1, angle=45),
+            Car(self.space, (600,500), (45,100), 1, angle=45),
+            Car(self.space, (700,500), (45,100), 1, angle=45),
+            Car(self.space, (800,500), (45,100), 1, angle=45),
 
-            Car(self.space, (400,650), (45,100), 1),
-            Car(self.space, (500,650), (45,100), 1),
-            Car(self.space, (600,650), (45,100), 1),
-            Car(self.space, (700,650), (45,100), 1),
-            Car(self.space, (800,650), (45,100), 1),
+            Car(self.space, (400,650), (45,100), 1, angle=90),
+            Car(self.space, (500,650), (45,100), 1, angle=90),
+            Car(self.space, (600,650), (45,100), 1, angle=90),
+            Car(self.space, (700,650), (45,100), 1, angle=90),
+            Car(self.space, (800,650), (45,100), 1, angle=90),
 
-            Car(self.space, (400,800), (45,100), 1),
-            Car(self.space, (500,800), (45,100), 1),
-            Car(self.space, (600,800), (45,100), 1),
-            Car(self.space, (700,800), (45,100), 1),
-            Car(self.space, (800,800), (45,100), 1)
+            Car(self.space, (400,800), (45,100), 1, angle=90),
+            Car(self.space, (500,800), (45,100), 1, angle=90),
+            Car(self.space, (600,800), (45,100), 1, angle=90),
+            Car(self.space, (700,800), (45,100), 1, angle=90),
+            Car(self.space, (800,800), (45,100), 1, angle=90)
         ]
         self.boxes = []
         for i in range(10):
             box = Block(self.space, (300,200 + i*35), (30,30), 1)
             self.boxes.append(box)
+
+        self.buildings = []
+        self.buildings.append(Building(self.space, (200, 700), (200,300)))
 
     def show_fps(self, surface, pos):
         if dt := perf_counter() - self.t0:
@@ -93,21 +96,14 @@ class Game():
         surface.blit(text_surf, pos)
 
     def update_screen(self):
-        self.show_fps(self.screen, (10,10))
-        self.show_velocity(self.screen, self.player.speed, (10,50))
         self.event_handler.event_handler(self.player)
         #self.space.debug_draw(self.draw_options)
-        self.graphics.draw_all()
-
-
-        # ## Follow the player
-        # s = pygame.display.get_surface()
-        # s_c = s.copy()
-        # pos = pymunk.Vec2d(500,450) - self.player.position
-        # s.fill((0,0,0))
-        # s.blit(s_c, pos)
+        self.graphics.draw_all(self.player.position)
+        self.show_fps(self.screen, (10,10))
+        self.show_velocity(self.screen, self.player.speed, (10,50))
 
         # ## Rotate whith player
+        # s = pygame.display.get_surface()
         # s_c = s.copy()
         # car = self.player.get_car()
         # if car:
@@ -115,13 +111,13 @@ class Game():
         # ang = degrees(self.player.angle)
         # s_r = pygame.transform.rotate(s_c, ang)
         # rect = s_r.get_rect(center = (500,450))
-        # s.fill((0,0,0))
+        # #s.fill((0,0,0))
         # s.blit(s_r, rect)
 
     def run_game(self):
         run = True
         while run:
-            self.screen.fill((200,200,200))
+            self.screen.fill((20,20,20))
             self.update_screen()
             self.space.step(1/self.fps)
             pygame.display.flip()
