@@ -38,48 +38,31 @@ class Game():
     def load(self):
         self.graphics = Graphics(self.space)
 
-        self.player = Player(self.space, (100,100), 10, 1)
+        # Make the player.
+        self.player = Player(self.space, (269,130), 10, 0.001)
+        
+        # Make all the cars.
         self.cars = [
-            Car(self.space, (50,200), (45,100), 1, acc=200, max_vel=300, angle=90),
-            Car(self.space, (200,200), (45,100), 1, acc=300, max_vel=300, angle=180),
-
-            Car(self.space, (400,200), (45,100), 1, angle=45),
-            Car(self.space, (500,200), (45,100), 1, angle=45),
-            Car(self.space, (600,200), (45,100), 1, angle=45),
-            Car(self.space, (700,200), (45,100), 1, angle=45),
-            Car(self.space, (800,200), (45,100), 1, angle=45),
-
-            Car(self.space, (400,350), (45,100), 1, angle=45),
-            Car(self.space, (500,350), (45,100), 1, angle=45),
-            Car(self.space, (600,350), (45,100), 1, angle=45),
-            Car(self.space, (700,350), (45,100), 1, angle=45),
-            Car(self.space, (800,350), (45,100), 1, angle=45),
-
-            Car(self.space, (400,500), (45,100), 1, angle=45),
-            Car(self.space, (500,500), (45,100), 1, angle=45),
-            Car(self.space, (600,500), (45,100), 1, angle=45),
-            Car(self.space, (700,500), (45,100), 1, angle=45),
-            Car(self.space, (800,500), (45,100), 1, angle=45),
-
-            Car(self.space, (400,650), (45,100), 1, angle=90),
-            Car(self.space, (500,650), (45,100), 1, angle=90),
-            Car(self.space, (600,650), (45,100), 1, angle=90),
-            Car(self.space, (700,650), (45,100), 1, angle=90),
-            Car(self.space, (800,650), (45,100), 1, angle=90),
-
-            Car(self.space, (400,800), (45,100), 1, angle=90),
-            Car(self.space, (500,800), (45,100), 1, angle=90),
-            Car(self.space, (600,800), (45,100), 1, angle=90),
-            Car(self.space, (700,800), (45,100), 1, angle=90),
-            Car(self.space, (800,800), (45,100), 1, angle=90)
+            #Car(self.space, (50,200), (45,100), 1, acc=200, max_vel=300, angle=90),
+            #Car(self.space, (200,200), (45,100), 1, acc=300, max_vel=300, angle=180),
+            Car(self.space, (184,186), (45,100), 1, acc=500, max_vel=1000, angle=180),
+            Car(self.space, (697,1937), (45,100), 1, acc=200, max_vel=300, angle=0)
         ]
-        self.boxes = []
-        for i in range(10):
-            box = Block(self.space, (300,200 + i*35), (30,30), 1)
-            self.boxes.append(box)
 
-        self.buildings = []
-        self.buildings.append(Building(self.space, (200, 700), (200,300)))
+        # Make Boxes.
+        self.boxes = [
+            #Block(self.space, (300,200 + 35), (30,30), 1),
+            #Block(self.space, (300,200 + 70), (30,30), 1)
+        ]
+        
+        # Make the Buildings.
+        boundary_w, boundary_h = 5000,5000
+        self.buildings = [
+            Building(self.space, (boundary_w/2, 0), (boundary_w,200)),# Up Boundary
+            Building(self.space, (0, boundary_h/2), (200, boundary_h)),# Right Boundary
+            Building(self.space, (boundary_w/2, boundary_h), (boundary_w,200)),# Down Boundary
+            Building(self.space, (boundary_w, boundary_h/2), (200, boundary_h))# Left Boundary
+        ]
 
     def show_fps(self, surface, pos):
         if dt := perf_counter() - self.t0:
@@ -111,7 +94,7 @@ class Game():
         # ang = degrees(self.player.angle)
         # s_r = pygame.transform.rotate(s_c, ang)
         # rect = s_r.get_rect(center = (500,450))
-        # #s.fill((0,0,0))
+        # s.fill((0,0,0))
         # s.blit(s_r, rect)
 
     def run_game(self):

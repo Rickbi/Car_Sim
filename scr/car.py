@@ -21,12 +21,10 @@ class Wheel(Block):
             pymunk.Body.update_velocity(body, gravity, 1, dt)
             ny = Vec2d( -sin(body.angle), cos(body.angle) )
             vy = ny*body.velocity.dot(ny)
-            if body.velocity.length > 290:
-                nx = Vec2d( cos(body.angle), sin(body.angle) )
-                vx = nx*body.velocity.dot(nx)
-                body.velocity = vy + vx*0.8
-            else:
-                body.velocity = vy
+            
+            #nx = Vec2d( cos(body.angle), sin(body.angle) )
+            #vx = nx*body.velocity.dot(nx)
+            body.velocity = vy
                 
         self.body.velocity_func = vel_condition
         self.filter = pymunk.ShapeFilter(categories=0b10, mask=0)
@@ -96,7 +94,7 @@ class Car(Block):
                 dam = 0.8
                 self.braking = False
             else:
-                dam = 1
+                dam = 0.99
             pymunk.Body.update_velocity(body, gravity, dam, dt)
             if body.velocity.length > self.max_vel:
                 body.velocity = self.max_vel*body.velocity.normalized()
