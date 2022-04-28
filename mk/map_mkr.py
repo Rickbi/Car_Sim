@@ -3,6 +3,7 @@ from pygame.locals import *
 from pygame import Vector2
 from os.path import join
 from obj import *
+import json
 
 class Screen:
     def __init__(self, size:tuple[int, int], fps:int=60) -> None:
@@ -98,9 +99,11 @@ class Screen:
                 pos = pygame.mouse.get_pos()
                 zoom = self.selected.sprite.zoom
                 self.selected.add( Obj(pos, 'player', zoom=zoom) )
+            elif event.key == K_s:
+                self.save()
 
     def load(self) -> None:
-        path_bg = join('assets', 'img', 'bg.png')
+        path_bg = join('assets', 'img', 'map1.png')
         self.surf_bg : pygame.Surface = pygame.image.load(path_bg).convert_alpha()
 
         self.objs = pygame.sprite.Group()
@@ -150,3 +153,23 @@ class Screen:
             self.clock.tick(self.fps)
             if pygame.event.get(QUIT):
                 run = False
+    
+    def get_data_to_save(self):
+        dic = {
+            'player' : [],
+            'car' : [],
+            'block' : [],
+            'building' : []
+        }
+        for obj in self.objs.sprites():
+            dic[obj.name].append(obj.get_data_to_save())
+            
+        return dic
+
+    def save(self):
+        print('Saving map...')
+        path = join('assets', 'map', 'test.json')
+        with open(path, 'w') as f:
+            data = self.get_data_to_save()
+            json.dump(data, f, indent=4)
+        print('Map Saved.')

@@ -1,7 +1,8 @@
 import pymunk
+from math import radians
 
 class Block(pymunk.Poly):
-    def __init__(self, space, pos, size, density) -> None:
+    def __init__(self, space, pos, size, density, angle=0) -> None:
         vertices = self.make_vertices(size)
         super().__init__(body=None, vertices=vertices, radius=0)
         
@@ -12,6 +13,7 @@ class Block(pymunk.Poly):
         self.friction = 1
         self.collision_type = 1
         self.size = size
+        self.body.angle = radians(-angle)
         
         space.add(self.body, self)
 
@@ -38,7 +40,7 @@ class Block(pymunk.Poly):
             self.space.remove(self.body, self)
 
 class Building(Block):
-    def __init__(self, space, pos, size) -> None:
-        super().__init__(space, pos, size, 1)
+    def __init__(self, space, pos, size, angle=0) -> None:
+        super().__init__(space, pos, size, 1, angle)
         self.body.body_type = pymunk.Body.STATIC
         self.elasticity = 0.2

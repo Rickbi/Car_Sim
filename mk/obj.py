@@ -47,3 +47,10 @@ class Obj(pygame.sprite.Sprite):
     def update(self, *args: Any, **kwargs: Any) -> None:
         self.rect.center = pygame.mouse.get_pos()
         return super().update(*args, **kwargs)
+
+    def get_data_to_save(self):
+        dic = {
+            'position' : self.rect.center,
+            'angle' : self.ang
+        }
+        return dic

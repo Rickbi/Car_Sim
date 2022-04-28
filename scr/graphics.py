@@ -19,13 +19,19 @@ class Graphics:
 
         path_block = join(self.path_img, 'block.png')
         path_car = join(self.path_img, 'car.png')
+        path_car_b = join(self.path_img, 'car_blue.png')
+        path_car_g = join(self.path_img, 'car_green.png')
+        path_car_r = join(self.path_img, 'car_red.png')
         path_wheel = join(self.path_img, 'wheel.png')
         path_player = join(self.path_img, 'player.png')
         path_building = join(self.path_img, 'building.png')
-        path_bg = join(self.path_img, 'bg.png')
+        path_bg = join(self.path_img, 'map1.png')
 
         self.surf_block = pygame.image.load(path_block).convert_alpha()
         self.surf_car = pygame.image.load(path_car).convert_alpha()
+        self.surf_car_b = pygame.image.load(path_car_b).convert_alpha()
+        self.surf_car_r = pygame.image.load(path_car_r).convert_alpha()
+        self.surf_car_g = pygame.image.load(path_car_g).convert_alpha()
         self.surf_wheel = pygame.image.load(path_wheel).convert_alpha()
         self.surf_player = pygame.image.load(path_player).convert_alpha()
         self.surf_building = pygame.image.load(path_building).convert_alpha()
@@ -90,7 +96,16 @@ class Graphics:
         # else:
         #     self.draw_wheel(car, offset)
         self.draw_wheel(car, offset)
-        roto_surf = pygame.transform.rotate(self.surf_car, degrees(-car.angle))
+        surf = self.surf_car
+        match car.car_color:
+            case 'BLUE':
+                surf = self.surf_car_b
+            case 'GREEN':
+                surf = self.surf_car_g
+            case 'RED':
+                surf = self.surf_car_r
+        
+        roto_surf = pygame.transform.rotate(surf, degrees(-car.angle))
         rect = roto_surf.get_rect(center=car.position)
         rect.move_ip(offset)
         self.screen.blit(roto_surf, rect)

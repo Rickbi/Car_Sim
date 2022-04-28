@@ -24,7 +24,7 @@ class Wheel(Block):
             
             #nx = Vec2d( cos(body.angle), sin(body.angle) )
             #vx = nx*body.velocity.dot(nx)
-            body.velocity = vy
+            body.velocity = vy# + vx*0.1
                 
         self.body.velocity_func = vel_condition
         self.filter = pymunk.ShapeFilter(categories=0b10, mask=0)
@@ -61,10 +61,10 @@ class Wheel(Block):
 
 
 class Car(Block):
-    def __init__(self, space:pymunk.Space, pos, size, density, acc=100, max_vel=110, angle=0) -> None:
+    def __init__(self, space:pymunk.Space, pos, size, density, acc=100, max_vel=110, angle=0, color='BLUE') -> None:
         super().__init__(space, pos, size, density)
         
-        self.color = pygame.Color(255,255,255)
+        self.car_color = color
 
         self.collision_type = 3
         self.player = None
@@ -73,7 +73,7 @@ class Car(Block):
         self.braking = False
         self.brake_ui = True
 
-        self.body.angle = radians(angle)
+        self.body.angle = radians(-angle)
 
         self.wheel_pos = self.size[1]/4
         dy_body = Vec2d(0, self.wheel_pos)
