@@ -7,10 +7,15 @@ You can get in and out of any car.
 
 ## Controls
 'wasd' or arrow keys to move the character.
+
 'f' to get in or out of the car.
+
 'ws' or up-down keys to accelerate and reverse while in the car.
+
 'ad' or left-right keys to turn left o right while in the car.
+
 SPACE to brake.
+
 Button 'x' of the window to close.
 
 ## How to run
