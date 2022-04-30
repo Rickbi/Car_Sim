@@ -51,7 +51,6 @@ class EventHandler():
                 player.add_to_space(self.space, pos, vel)
                 if car.speed < self.limit_speed_brake:
                     car.add_brake()
-                #player.turn(car.angle)
                 car.add_player(None)
                 player.add_car(None)
 

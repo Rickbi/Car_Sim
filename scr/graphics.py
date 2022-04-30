@@ -4,7 +4,7 @@ from math import degrees
 from os.path import join
 
 from player import Player
-from car import Car, Wheel
+from car import Car
 from block import Block, Building
 
 class Graphics:
@@ -91,10 +91,6 @@ class Graphics:
         self.surf_bg.blit(roto_surf_back, back_rect_right)
 
     def draw_car(self, car:Car, offset:Vec2d):
-        # if car.speed > 290:
-        #     self.draw_wheel_rift(car, offset)
-        # else:
-        #     self.draw_wheel(car, offset)
         self.draw_wheel(car, offset)
         surf = self.surf_car
         match car.car_color:

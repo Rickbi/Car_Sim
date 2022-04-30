@@ -21,10 +21,7 @@ class Wheel(Block):
             pymunk.Body.update_velocity(body, gravity, 1, dt)
             ny = Vec2d( -sin(body.angle), cos(body.angle) )
             vy = ny*body.velocity.dot(ny)
-            
-            #nx = Vec2d( cos(body.angle), sin(body.angle) )
-            #vx = nx*body.velocity.dot(nx)
-            body.velocity = vy# + vx*0.1
+            body.velocity = vy
                 
         self.body.velocity_func = vel_condition
         self.filter = pymunk.ShapeFilter(categories=0b10, mask=0)
@@ -148,22 +145,11 @@ class Car(Block):
     def get_door_pos(self):
         ang = self.body.angle
         dx = -(self.size[0]/2 + self.player.radius)*Vec2d(cos(ang), sin(ang) )
-        #dy = (self.size[1]/4)*Vec2d(-sin(ang), cos(ang) )
         pos = self.body.position + dx
         return pos
     
     def brake(self):
         self.braking = True
-        # if self.speed <= self.acc:
-        #     self.body.velocity = Vec2d(0,0)
-        # else:
-        #     nw = Vec2d(-sin(self.body.angle), cos(self.body.angle))
-        #     direction = self.body.velocity.dot(nw)
-        #     force = self.speed**2*self.mass#self.acc*self.mass
-        #     if direction > 0:
-        #         force *= -1
-            
-        #     self.body.apply_force_at_local_point( (0,force), (0,0))
 
     def turn(self, direction:int):
         '''Turn Left if direction < 0\n
@@ -171,12 +157,10 @@ class Car(Block):
         self.wheel_front.add_to_angle(0.1*direction, self.body.angle)
 
     def accelerate(self):
-        #self.wheel_back.accelerate(-self.acc)
         force = self.acc*self.mass
         self.body.apply_force_at_local_point( (0,-force), (0,0))
 
     def back(self):
-        #self.wheel_back.accelerate(self.acc/2)
         force = self.acc*self.mass
         self.body.apply_force_at_local_point( (0,force), (0,0))
 
